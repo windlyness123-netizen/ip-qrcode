@@ -123,24 +123,25 @@
             'https://ipapi.co/json/'
         ];
 
+        // 调整顺序：优先使用 ipapi.co（通常返回市级信息）
         const geoAPIs = [
-            { url: (ip) => `https://ip.sb/geoip/${ip}`, format: 'ip.sb' },
             { url: (ip) => `https://ipapi.co/${ip}/json/`, format: 'ipapi' },
+            { url: (ip) => `https://ip.sb/geoip/${ip}`, format: 'ip.sb' },
             { url: (ip) => `https://ipwho.is/${ip}`, format: 'ipwhois' }
         ];
 
         function extractLocation(data, format) {
-            if (format === 'ip.sb') {
-                return {
-                    city: data.city || '',
-                    region: data.region || '',
-                    country: data.country || ''
-                };
-            } else if (format === 'ipapi') {
+            if (format === 'ipapi') {
                 return {
                     city: data.city || '',
                     region: data.region || '',
                     country: data.country_name || ''
+                };
+            } else if (format === 'ip.sb') {
+                return {
+                    city: data.city || '',
+                    region: data.region || '',
+                    country: data.country || ''
                 };
             } else if (format === 'ipwhois') {
                 return {
@@ -185,7 +186,9 @@
                         city = extracted.city;
                         region = extracted.region;
                         country = extracted.country;
+                        // 组合显示：优先使用 region + city，如果 city 为空则只用 region 或 country
                         location = (region + ' ' + city).trim() || country;
+                        // 如果成功获取，跳出循环
                         break;
                     }
                 } catch (e) {
