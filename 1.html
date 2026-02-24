@@ -5,8 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>IP归属地查询</title>
     <style>
-        /* ... 样式与上一版本完全一致，此处省略以节省篇幅 ... */
-        /* 请直接使用上一轮回复中提供的完整样式代码 */
+        /* 样式与之前完全相同，此处省略节省篇幅，请保留上一版的完整样式 */
         body { ... }
         .container { ... }
         .title { ... }
@@ -19,30 +18,23 @@
         .footer { ... }
         .error-detail { ... }
         .contact-info { ... }
-        .contact-info a { ... }
         .contact-info .phone { ... }
         .input-area { ... }
         #ipInput { ... }
-        #ipInput:focus { ... }
         #queryBtn { ... }
-        #queryBtn:hover { ... }
-        #queryBtn:disabled { ... }
         .note { ... }
     </style>
 </head>
 <body>
     <div class="container">
         <div class="title">📍 IP归属地查询</div>
-
         <div class="input-area">
             <input type="text" id="ipInput" placeholder="输入IP地址（如 8.8.8.8）" value="">
             <button id="queryBtn" onclick="handleManualQuery()">查询</button>
         </div>
         <div class="note">提示：输入IP后点击查询，将显示该IP的归属地。页面加载时自动显示当前设备IP。</div>
-
         <div id="ipDisplay" class="loading">正在获取IP信息...</div>
         <div id="errorDetail" class="error-detail"></div>
-
         <div class="contact-info">
             <div style="font-size: 18px; margin-bottom: 8px;">📸 功能正常了？截图本页面联系在线客服</div>
             <div>没回复请致电 <span class="phone">18761662888</span></div>
@@ -51,48 +43,83 @@
     <div class="footer">扫码即查 · 实时更新</div>
 
     <script>
+        // 请替换为您的百度地图 API Key
+        const BAIDU_AK = 'YOUR_BAIDU_AK'; // <-- 在这里填入你的ak
+
         function showError(msg) {
             document.getElementById('errorDetail').innerText = '错误：' + msg;
         }
 
-        // 新增百度查询函数
-        async function queryBaiduIP(ip) {
+        // 1. 百度地图 IP 定位 API（优先使用）
+        async function queryBaiduMap(ip) {
+            if (!BAIDU_AK || BAIDU_AK === 'YOUR_BAIDU_AK') {
+                console.warn('未配置百度地图AK，跳过');
+                return null;
+            }
             try {
-                const url = `https://qifu.baidu.com/api/v1/ip-portrait/brief-info?ip=${ip}`;
-                // 注意：这个接口可能需要特定的请求头才能访问，这里先尝试最简单的fetch
-                // 如果遇到403错误，可能需要像你抓包那样添加Referer和Cookie等头信息
-                const res = await fetch(url, {
-                    timeout: 5000,
-                    headers: {
-                        // 尝试添加必要的请求头，你可以根据实际情况调整
-                        'Referer': 'https://qifu.baidu.com/',
-                        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.6261.95 Safari/537.36'
-                        // 注意：不建议硬编码Cookie，因为会过期。如果不添加这些头也能成功，那是最好的。
-                    }
-                });
-                if (!res.ok) {
-                    console.warn(`百度API返回状态码: ${res.status}`);
-                    return null; // 返回null表示失败，以便尝试备用API
-                }
+                // 接口文档：https://lbsyun.baidu.com/index.php?title=webapi/ip-api
+                const url = `https://api.map.baidu.com/location/ip?ak=${BAIDU_AK}&ip=${ip}&coor=bd09ll`;
+                const res = await fetch(url, { timeout: 5000 });
+                if (!res.ok) return null;
                 const data = await res.json();
-                if (data.code === 200 && data.data) {
-                    // 成功提取数据
+                if (data.status === 0 && data.content && data.content.address_detail) {
+                    const addr = data.content.address_detail;
                     return {
-                        city: data.data.city || '',
-                        region: data.data.province || '',
-                        country: data.data.country || ''
+                        country: '中国', // 百度返回的country_code为“CN”，可直接用
+                        region: addr.province || '',
+                        city: addr.city || ''
                     };
                 } else {
-                    console.warn('百度API返回数据格式异常', data);
+                    console.warn('百度地图API返回异常', data);
                     return null;
                 }
             } catch (e) {
-                console.warn('百度API请求失败:', e);
+                console.warn('百度地图API请求失败', e);
                 return null;
             }
         }
 
-        // 修改后的通用IP查询函数
+        // 2. 备用 API：ipapi.co（带中文参数）
+        async function queryIpapiCo(ip) {
+            try {
+                const url = `https://ipapi.co/${ip}/json/?lang=zh-cn`; // 请求中文
+                const res = await fetch(url, { timeout: 5000 });
+                if (!res.ok) return null;
+                const data = await res.json();
+                if (data.error) return null;
+                return {
+                    country: data.country_name || '',
+                    region: data.region || '',
+                    city: data.city || ''
+                };
+            } catch (e) {
+                console.warn('ipapi.co 失败', e);
+                return null;
+            }
+        }
+
+        // 3. 备用 API：ip.sb（尝试获取中文）
+        async function queryIpSb(ip) {
+            try {
+                const url = `https://ip.sb/geoip/${ip}`;
+                const res = await fetch(url, {
+                    timeout: 5000,
+                    headers: { 'Accept-Language': 'zh-CN,zh;q=0.9' }
+                });
+                if (!res.ok) return null;
+                const data = await res.json();
+                return {
+                    country: data.country || '',
+                    region: data.region || '',
+                    city: data.city || ''
+                };
+            } catch (e) {
+                console.warn('ip.sb 失败', e);
+                return null;
+            }
+        }
+
+        // 通用查询函数：依次尝试百度地图 -> ipapi.co -> ip.sb -> ipwho.is
         async function queryIP(ip) {
             document.getElementById('ipDisplay').innerHTML = '<div class="loading">正在查询...</div>';
             document.getElementById('errorDetail').innerText = '';
@@ -100,68 +127,50 @@
             let location = '未知';
             let city = '', region = '', country = '';
 
-            // 1. 优先使用百度API
-            const baiduResult = await queryBaiduIP(ip);
+            // 尝试百度地图
+            const baiduResult = await queryBaiduMap(ip);
             if (baiduResult) {
                 city = baiduResult.city;
                 region = baiduResult.region;
                 country = baiduResult.country;
                 location = (region + ' ' + city).trim() || country;
             } else {
-                // 2. 如果百度API失败，再尝试原来的备用API
-                console.log('百度API失败，尝试备用API...');
-                const geoAPIs = [
-                    { url: (ip) => `https://ipapi.co/${ip}/json/`, format: 'ipapi' },
-                    { url: (ip) => `https://ip.sb/geoip/${ip}`, format: 'ip.sb' },
-                    { url: (ip) => `https://ipwho.is/${ip}`, format: 'ipwhois' }
-                ];
-
-                function extractLocation(data, format) {
-                    if (format === 'ipapi') {
-                        return {
-                            city: data.city || '',
-                            region: data.region || '',
-                            country: data.country_name || ''
-                        };
-                    } else if (format === 'ip.sb') {
-                        return {
-                            city: data.city || '',
-                            region: data.region || '',
-                            country: data.country || ''
-                        };
-                    } else if (format === 'ipwhois') {
-                        return {
-                            city: data.city || '',
-                            region: data.region || '',
-                            country: data.country || ''
-                        };
-                    }
-                    return { city: '', region: '', country: '' };
-                }
-
-                for (let geo of geoAPIs) {
-                    try {
-                        const url = geo.url(ip);
-                        const res = await fetch(url, { timeout: 5000 });
-                        if (!res.ok) continue;
-                        const data = await res.json();
-                        const extracted = extractLocation(data, geo.format);
-                        if (extracted.country || extracted.city) {
-                            city = extracted.city;
-                            region = extracted.region;
-                            country = extracted.country;
-                            location = (region + ' ' + city).trim() || country;
-                            break;
+                // 尝试 ipapi.co
+                const ipapiResult = await queryIpapiCo(ip);
+                if (ipapiResult) {
+                    city = ipapiResult.city;
+                    region = ipapiResult.region;
+                    country = ipapiResult.country;
+                    location = (region + ' ' + city).trim() || country;
+                } else {
+                    // 尝试 ip.sb
+                    const sbResult = await queryIpSb(ip);
+                    if (sbResult) {
+                        city = sbResult.city;
+                        region = sbResult.region;
+                        country = sbResult.country;
+                        location = (region + ' ' + city).trim() || country;
+                    } else {
+                        // 最后尝试 ipwho.is
+                        try {
+                            const url = `https://ipwho.is/${ip}`;
+                            const res = await fetch(url, { timeout: 5000 });
+                            if (res.ok) {
+                                const data = await res.json();
+                                if (!data.success) throw new Error(data.message);
+                                city = data.city || '';
+                                region = data.region || '';
+                                country = data.country || '';
+                                location = (region + ' ' + city).trim() || country;
+                            }
+                        } catch (e) {
+                            console.warn('所有API均失败', e);
                         }
-                    } catch (e) {
-                        console.warn('备用Geo API失败:', geo.format, e);
                     }
                 }
             }
 
-            // 判断是否包含“南京”
             const isNanjing = location.includes('南京');
-
             document.getElementById('ipDisplay').innerHTML = `
                 <div class="ip-address">${ip}</div>
                 <div class="location ${isNanjing ? 'nj' : 'not-nj'}">
@@ -173,14 +182,13 @@
             `;
         }
 
-        // 获取当前设备IP（与之前相同，但增加了百度API的优先级）
+        // 获取当前设备IP（与之前相同）
         async function getCurrentIP() {
             const ipAPIs = [
                 'https://api.ipify.org?format=json',
                 'https://api.my-ip.io/ip.json',
                 'https://ipapi.co/json/'
             ];
-
             let ip = null;
             for (let api of ipAPIs) {
                 try {
@@ -193,32 +201,21 @@
                     console.warn('IP API 失败:', api, e);
                 }
             }
-
             if (!ip) {
                 document.getElementById('ipDisplay').innerHTML = '<div class="ip-address">获取失败</div><div class="detail">无法获取IP地址，请检查网络</div>';
                 showError('所有IP API均失败');
                 return;
             }
-
             await queryIP(ip);
         }
 
-        // 处理手动查询
         async function handleManualQuery() {
             const input = document.getElementById('ipInput').value.trim();
-            if (!input) {
-                showError('请输入IP地址');
-                return;
-            }
-            const ipPattern = /^(\d{1,3}\.){3}\d{1,3}$/;
-            if (!ipPattern.test(input)) {
-                showError('IP地址格式不正确');
-                return;
-            }
+            if (!input) return showError('请输入IP地址');
+            if (!/^(\d{1,3}\.){3}\d{1,3}$/.test(input)) return showError('IP格式不正确');
             await queryIP(input);
         }
 
-        // 页面加载时自动获取当前IP
         getCurrentIP().catch(e => {
             document.getElementById('ipDisplay').innerHTML = '<div class="ip-address">获取失败</div><div class="detail">请检查网络后重试</div>';
             showError(e.message);
