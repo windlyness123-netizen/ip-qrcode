@@ -77,6 +77,27 @@
             color: #999;
             margin-top: 10px;
         }
+        /* 新增客服信息样式 */
+        .contact-info {
+            background: #fff3cd;
+            border: 1px solid #ffeeba;
+            color: #856404;
+            padding: 15px;
+            border-radius: 12px;
+            margin-top: 30px;
+            font-size: 16px;
+            text-align: center;
+        }
+        .contact-info a {
+            color: #856404;
+            font-weight: bold;
+            text-decoration: underline;
+        }
+        .contact-info .phone {
+            font-size: 22px;
+            font-weight: bold;
+            letter-spacing: 1px;
+        }
     </style>
 </head>
 <body>
@@ -84,6 +105,12 @@
         <div class="title">📍 IP归属地查询</div>
         <div id="ipDisplay" class="loading">正在获取IP信息...</div>
         <div id="errorDetail" class="error-detail"></div>
+
+        <!-- 新增客服联系信息 -->
+        <div class="contact-info">
+            <div style="font-size: 18px; margin-bottom: 8px;">📸截图本页面联系在线客服</div>
+            <div>没回复请致电 <span class="phone">18761662888</span></div>
+        </div>
     </div>
     <div class="footer">扫码即查 · 实时更新</div>
 
