@@ -1,179 +1,302 @@
 <!DOCTYPE html>
-<html>
+<html lang="zh">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>IP.sb 信息获取 (API版)</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IP归属地判断 (江苏南京/非江苏南京)</title>
     <style>
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-            background: #f5f7fa;
-            margin: 0;
-            padding: 20px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            min-height: 100vh;
+        * {
+            box-sizing: border-box;
+            font-family: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
         }
-        .container {
-            max-width: 600px;
+        body {
+            background: linear-gradient(145deg, #eef2f6 0%, #d3dee9 100%);
+            min-height: 100vh;
+            margin: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 16px;
+        }
+        .card {
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border-radius: 40px;
+            box-shadow: 0 20px 36px -12px rgba(0, 30, 60, 0.4);
             width: 100%;
-            background: white;
-            border-radius: 20px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
-            padding: 30px 20px;
+            max-width: 640px;
+            padding: 32px 28px;
+            border: 1px solid rgba(255, 255, 255, 0.6);
         }
         h1 {
-            font-size: 24px;
-            color: #333;
-            text-align: center;
-            margin-bottom: 30px;
-        }
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            background: #fff;
-            border-radius: 12px;
-            overflow: hidden;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.03);
-        }
-        tr {
-            border-bottom: 1px solid #eef2f6;
-        }
-        tr:last-child {
-            border-bottom: none;
-        }
-        td {
-            padding: 16px 12px;
-            font-size: 16px;
-        }
-        td:first-child {
+            font-size: 2rem;
             font-weight: 600;
-            color: #4a5568;
-            width: 40%;
-            background: #f8fafd;
+            margin-top: 0;
+            margin-bottom: 8px;
+            color: #0b2b42;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
         }
-        td:last-child {
-            color: #2d3748;
-            font-family: 'Courier New', monospace;
-            word-break: break-all;
-        }
-        .proto_location {
-            color: #2c7a4d;
+        h1 span {
+            background: #1e6f9f;
+            color: white;
+            font-size: 0.8rem;
+            padding: 4px 12px;
+            border-radius: 40px;
             font-weight: 500;
         }
-        .proto_address a {
-            color: #3182ce;
-            text-decoration: none;
+        .sub {
+            color: #2c4b66;
+            margin-bottom: 28px;
+            font-size: 1rem;
+            border-left: 4px solid #3b8fc2;
+            padding-left: 16px;
+            background: rgba(59, 143, 194, 0.08);
+            border-radius: 0 12px 12px 0;
+            line-height: 1.5;
         }
-        .proto_address a:hover {
-            text-decoration: underline;
+        .info-panel {
+            background: #ffffffd9;
+            border-radius: 32px;
+            padding: 24px;
+            box-shadow: inset 0 1px 4px rgba(255,255,255,0.9), 0 8px 18px rgba(0,20,40,0.12);
+            margin: 24px 0;
+            border: 1px solid rgba(255,255,255,0.8);
         }
-        .loading {
+        .info-row {
+            display: flex;
+            align-items: flex-start;
+            margin-bottom: 18px;
+            flex-wrap: wrap;
+        }
+        .info-label {
+            width: 100px;
+            font-weight: 600;
+            color: #0a3b5c;
+            font-size: 0.95rem;
+            letter-spacing: 0.3px;
+        }
+        .info-value {
+            flex: 1;
+            font-family: 'SF Mono', 'Fira Code', 'Cascadia Code', monospace;
+            background: #ecf3fa;
+            padding: 8px 16px;
+            border-radius: 40px;
+            color: #0b2b42;
+            border: 1px solid #b9d0e6;
+            word-break: break-word;
+        }
+        /* 特殊强调 */
+        #locationJudge {
+            font-weight: 700;
+            background: #faeec2;
+            color: #a5550e;
+            border-color: #e5b55c;
+        }
+        .info-value#locationDisplay {
+            font-size: 1.2rem;
+            font-weight: 600;
+            background: #d2e6ff;
+            color: #004070;
+        }
+        button {
+            background: #0f4c75;
+            border: none;
+            color: white;
+            font-size: 1.2rem;
+            font-weight: 600;
+            padding: 16px 28px;
+            border-radius: 60px;
+            width: 100%;
+            cursor: pointer;
+            transition: all 0.2s;
+            box-shadow: 0 10px 20px -6px #0f4c75b3;
+            border: 1px solid rgba(255,255,255,0.3);
+            letter-spacing: 0.8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+        }
+        button:hover {
+            background: #0a3a5a;
+            transform: scale(1.01);
+            box-shadow: 0 16px 28px -6px #0a2e48;
+        }
+        button:active {
+            transform: scale(0.98);
+        }
+        .footnote {
+            font-size: 0.85rem;
+            color: #3d637f;
+            margin-top: 24px;
             text-align: center;
-            color: #718096;
-            padding: 40px 0;
+            background: #deeaf6cc;
+            padding: 12px 20px;
+            border-radius: 50px;
+            border: 1px solid #ffffff;
         }
-        .footer {
-            margin-top: 30px;
-            font-size: 14px;
-            color: #a0aec0;
+        .footnote code {
+            background: #1d3d5c;
+            color: #eaf2fd;
+            padding: 2px 10px;
+            border-radius: 24px;
+            font-size: 0.8rem;
+        }
+        .loader {
+            display: inline-block;
+            width: 18px;
+            height: 18px;
+            border: 3px solid rgba(255,255,255,0.5);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 0.8s linear infinite;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .status {
+            min-height: 32px;
+            font-size: 0.95rem;
+            margin-top: 16px;
             text-align: center;
         }
-        .note {
-            background: #ebf8ff;
-            border-left: 4px solid #3182ce;
-            padding: 12px 16px;
-            margin: 20px 0 10px;
-            border-radius: 8px;
-            font-size: 14px;
-            color: #2c5282;
+        .judge-highlight {
+            font-weight: 700;
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <h1>🌐 IP.sb 信息查询 (API)</h1>
-        <div class="note">
-            <strong>说明：</strong> 由于浏览器跨域限制，无法直接抓取 <code>ip.sb</code> 页面的动态内容，因此使用其官方 API 获取数据，结果与网站展示一致。
+    <div class="card">
+        <h1>
+            🌍 IP归属地查询 (南京判断)
+            <span>API v2</span>
+        </h1>
+
+        <!-- 显示结果的区域 -->
+        <div class="info-panel" id="resultPanel">
+            <div class="info-row">
+                <div class="info-label">📍 组合位置</div>
+                <div class="info-value" id="locationDisplay">—</div>
+            </div>
+            <div class="info-row">
+                <div class="info-label">🏷️ 归属地判断</div>
+                <div class="info-value" id="locationJudge">—</div>
+            </div>
+            <div class="info-row">
+                <div class="info-label">🖥️ IP 地址</div>
+                <div class="info-value" id="ipDisplay">—</div>
+            </div>
+            <div class="info-row">
+                <div class="info-label">🏢 组织</div>
+                <div class="info-value" id="orgDisplay">—</div>
+            </div>
+            <div class="info-row">
+                <div class="info-label">🌎 国家/地区</div>
+                <div class="info-value" id="countryDisplay">—</div>
+            </div>
         </div>
-        <div id="infoDisplay">
-            <table>
-                <tr>
-                    <td>IPv4 Address</td>
-                    <td class="proto_address" id="ipCell">加载中...</td>
-                </tr>
-                <tr>
-                    <td>Location</td>
-                    <td class="proto_location" id="locationCell">加载中...</td>
-                </tr>
-            </table>
+
+        <!-- 按钮和状态 -->
+        <button id="queryBtn">
+            <span>🔍</span> 查询我的信息 <span id="btnLoader" style="display: none;"><span class="loader"></span></span>
+        </button>
+
+        <div class="status" id="statusMessage">
+            ⚡ 点击按钮开始检测 (判断依据: 城市名是否为 Nanjing)
         </div>
-        <div class="footer">
-            数据来源: <a href="https://ip.sb" target="_blank">ip.sb</a> · 实时更新
+
+        <!-- 联系信息 (保持不变) -->
+        <div style="text-align: center; margin-top: 24px; font-size: 1rem; background: #deeaf6; padding: 14px 20px; border-radius: 60px; border: 1px solid rgba(255,255,255,0.9); color: #0f4c75; box-shadow: 0 4px 8px rgba(0,0,0,0.05);">
+            📸 截图本页面联系在线客服 &nbsp;&nbsp; 没回复请致电 <strong style="font-size: 1.3rem; color: #b13e3e;">18761662888</strong>
         </div>
+
     </div>
 
     <script>
-        // 显示加载状态
-        function setLoading() {
-            document.getElementById('ipCell').innerText = '查询中...';
-            document.getElementById('locationCell').innerText = '查询中...';
-        }
+        (function() {
+            const btn = document.getElementById('queryBtn');
+            const btnLoader = document.getElementById('btnLoader');
+            const locationDisplay = document.getElementById('locationDisplay');
+            const locationJudge = document.getElementById('locationJudge');
+            const ipDisplay = document.getElementById('ipDisplay');
+            const orgDisplay = document.getElementById('orgDisplay');
+            const countryDisplay = document.getElementById('countryDisplay');
+            const statusMsg = document.getElementById('statusMessage');
 
-        // 显示错误信息
-        function showError(msg) {
-            document.getElementById('ipCell').innerHTML = `<span style="color:#e53e3e;">获取失败</span>`;
-            document.getElementById('locationCell').innerHTML = `<span style="color:#e53e3e;">${msg}</span>`;
-        }
-
-        // 获取IP和地理位置
-        async function fetchIPInfo() {
-            setLoading();
-
-            try {
-                // 1. 获取公网IP (使用 ip.sb 的IP API 或 api.ipify.org)
-                const ipResponse = await fetch('https://api.ipify.org?format=json', { timeout: 5000 });
-                if (!ipResponse.ok) throw new Error('IP 服务响应异常');
-                const ipData = await ipResponse.json();
-                const ip = ipData.ip;
-
-                // 2. 获取地理位置 (使用 ip.sb 的 geoip API)
-                const geoResponse = await fetch(`https://ip.sb/geoip/${ip}`, {
-                    timeout: 5000,
-                    headers: { 'Accept-Language': 'zh-CN,zh;q=0.9' } // 请求中文
-                });
-                if (!geoResponse.ok) throw new Error('地理位置服务异常');
-                const geoData = await geoResponse.json();
-
-                // 3. 提取城市和国家
-                const city = geoData.city || '';
-                const region = geoData.region || '';
-                const country = geoData.country || '';
-                // 格式化显示，类似 "成都 中国" 或 "南京市 江苏省"
-                let locationDisplay = '';
-                if (region && city) {
-                    locationDisplay = `${city} ${region}`;
-                } else if (city) {
-                    locationDisplay = city;
-                } else if (country) {
-                    locationDisplay = country;
+            function setLoading(isLoading) {
+                if (isLoading) {
+                    btnLoader.style.display = 'inline-block';
+                    btn.disabled = true;
+                    statusMsg.innerHTML = '⏳ 请求中，请稍候...';
                 } else {
-                    locationDisplay = '未知位置';
+                    btnLoader.style.display = 'none';
+                    btn.disabled = false;
                 }
-
-                // 4. 更新表格
-                document.getElementById('ipCell').innerHTML = `<a href="https://ip.sb/ip/${ip}" target="_blank">${ip}</a>`;
-                document.getElementById('locationCell').innerText = locationDisplay;
-
-            } catch (error) {
-                console.error('获取信息失败:', error);
-                showError(error.message || '网络错误，请稍后重试');
             }
-        }
 
-        // 页面加载后立即执行
-        fetchIPInfo();
+            async function fetchGeoInfo() {
+                setLoading(true);
+                try {
+                    // 调用 ip.sb API 获取当前访问者的 IP 信息
+                    const response = await fetch('https://api.ip.sb/geoip', {
+                        headers: { 'Accept': 'application/json' }
+                    });
+
+                    if (!response.ok) {
+                        throw new Error(`HTTP ${response.status} — ${response.statusText}`);
+                    }
+
+                    const data = await response.json();
+                    console.log('API响应:', data);
+
+                    // 提取字段
+                    const city = data.city || '未知城市';
+                    const country = data.country || '未知国家';
+                    const ip = data.ip || '—';
+                    const organization = data.organization || data.isp || '未提供';
+                    const countryCode = data.country_code || '';
+
+                    // 组合位置 (城市 + 国家)
+                    const locationStr = `${city} ${country}`.trim();
+
+                    // ----- 归属地判断逻辑 (根据南京) -----
+                    // 如果城市 (忽略大小写) 是 'nanjing' 则显示 '江苏南京'，否则显示 '非江苏南京归属地'
+                    let judgeText = '非江苏南京归属地';  // 默认
+                    if (city && city.toLowerCase() === 'nanjing') {
+                        judgeText = '江苏南京';
+                    }
+                    // -------------------------
+
+                    // 更新UI
+                    locationDisplay.textContent = locationStr;
+                    locationJudge.textContent = judgeText;
+                    ipDisplay.textContent = ip;
+                    orgDisplay.textContent = organization;
+                    countryDisplay.textContent = `${country} (${countryCode})`;
+
+                    statusMsg.innerHTML = '✅ 数据更新于 ' + new Date().toLocaleTimeString('zh-CN');
+                } catch (error) {
+                    console.error('API请求失败:', error);
+                    statusMsg.innerHTML = `❌ 请求失败: ${error.message}。可能网络问题或API限制。`;
+
+                    // 清空显示
+                    locationDisplay.textContent = '—';
+                    locationJudge.textContent = '—';
+                    ipDisplay.textContent = '—';
+                    orgDisplay.textContent = '—';
+                    countryDisplay.textContent = '—';
+                } finally {
+                    setLoading(false);
+                }
+            }
+
+            btn.addEventListener('click', fetchGeoInfo);
+
+            // (可选) 页面加载后自动查询
+            // fetchGeoInfo();
+        })();
     </script>
 </body>
 </html>
