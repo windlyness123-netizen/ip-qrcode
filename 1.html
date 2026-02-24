@@ -97,11 +97,63 @@
             font-weight: bold;
             letter-spacing: 1px;
         }
+        /* 新增输入框样式 */
+        .input-area {
+            margin: 20px 0 10px;
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+        }
+        #ipInput {
+            flex: 1;
+            padding: 12px 15px;
+            border: 2px solid #ddd;
+            border-radius: 30px;
+            font-size: 16px;
+            outline: none;
+            transition: border-color 0.3s;
+        }
+        #ipInput:focus {
+            border-color: #667eea;
+        }
+        #queryBtn {
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 30px;
+            padding: 12px 25px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background 0.3s;
+            white-space: nowrap;
+        }
+        #queryBtn:hover {
+            background: #5a67d8;
+        }
+        #queryBtn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        .note {
+            font-size: 14px;
+            color: #999;
+            margin-bottom: 20px;
+            text-align: left;
+        }
     </style>
 </head>
 <body>
     <div class="container">
         <div class="title">📍 IP归属地查询</div>
+
+        <!-- 新增自定义IP输入框 -->
+        <div class="input-area">
+            <input type="text" id="ipInput" placeholder="输入IP地址（如 8.8.8.8）" value="">
+            <button id="queryBtn" onclick="handleManualQuery()">查询</button>
+        </div>
+        <div class="note">提示：输入IP后点击查询，将显示该IP的归属地。页面加载时自动显示当前设备IP。</div>
+
         <div id="ipDisplay" class="loading">正在获取IP信息...</div>
         <div id="errorDetail" class="error-detail"></div>
 
@@ -117,64 +169,45 @@
             document.getElementById('errorDetail').innerText = '错误：' + msg;
         }
 
-        const ipAPIs = [
-            'https://api.ipify.org?format=json',
-            'https://api.my-ip.io/ip.json',
-            'https://ipapi.co/json/'
-        ];
-
-        // 调整顺序：优先使用 ipapi.co（通常返回市级信息）
-        const geoAPIs = [
-            { url: (ip) => `https://ipapi.co/${ip}/json/`, format: 'ipapi' },
-            { url: (ip) => `https://ip.sb/geoip/${ip}`, format: 'ip.sb' },
-            { url: (ip) => `https://ipwho.is/${ip}`, format: 'ipwhois' }
-        ];
-
-        function extractLocation(data, format) {
-            if (format === 'ipapi') {
-                return {
-                    city: data.city || '',
-                    region: data.region || '',
-                    country: data.country_name || ''
-                };
-            } else if (format === 'ip.sb') {
-                return {
-                    city: data.city || '',
-                    region: data.region || '',
-                    country: data.country || ''
-                };
-            } else if (format === 'ipwhois') {
-                return {
-                    city: data.city || '',
-                    region: data.region || '',
-                    country: data.country || ''
-                };
-            }
-            return { city: '', region: '', country: '' };
-        }
-
-        async function getIPInfo() {
-            let ip = null;
-            for (let api of ipAPIs) {
-                try {
-                    const res = await fetch(api, { timeout: 5000 });
-                    if (!res.ok) continue;
-                    const data = await res.json();
-                    ip = data.ip || data.ip_address;
-                    if (ip) break;
-                } catch (e) {
-                    console.warn('IP API 失败:', api, e);
-                }
-            }
-
-            if (!ip) {
-                document.getElementById('ipDisplay').innerHTML = '<div class="ip-address">获取失败</div><div class="detail">无法获取IP地址，请检查网络</div>';
-                showError('所有IP API均失败');
-                return;
-            }
+        // 通用的IP查询函数
+        async function queryIP(ip) {
+            // 显示加载状态
+            document.getElementById('ipDisplay').innerHTML = '<div class="loading">正在查询...</div>';
+            document.getElementById('errorDetail').innerText = '';
 
             let location = '未知';
             let city = '', region = '', country = '';
+
+            // 优先使用 ipapi.co
+            const geoAPIs = [
+                { url: (ip) => `https://ipapi.co/${ip}/json/`, format: 'ipapi' },
+                { url: (ip) => `https://ip.sb/geoip/${ip}`, format: 'ip.sb' },
+                { url: (ip) => `https://ipwho.is/${ip}`, format: 'ipwhois' }
+            ];
+
+            function extractLocation(data, format) {
+                if (format === 'ipapi') {
+                    return {
+                        city: data.city || '',
+                        region: data.region || '',
+                        country: data.country_name || ''
+                    };
+                } else if (format === 'ip.sb') {
+                    return {
+                        city: data.city || '',
+                        region: data.region || '',
+                        country: data.country || ''
+                    };
+                } else if (format === 'ipwhois') {
+                    return {
+                        city: data.city || '',
+                        region: data.region || '',
+                        country: data.country || ''
+                    };
+                }
+                return { city: '', region: '', country: '' };
+            }
+
             for (let geo of geoAPIs) {
                 try {
                     const url = geo.url(ip);
@@ -186,9 +219,7 @@
                         city = extracted.city;
                         region = extracted.region;
                         country = extracted.country;
-                        // 组合显示：优先使用 region + city，如果 city 为空则只用 region 或 country
                         location = (region + ' ' + city).trim() || country;
-                        // 如果成功获取，跳出循环
                         break;
                     }
                 } catch (e) {
@@ -210,7 +241,55 @@
             `;
         }
 
-        getIPInfo().catch(e => {
+        // 获取当前设备IP（自动执行）
+        async function getCurrentIP() {
+            const ipAPIs = [
+                'https://api.ipify.org?format=json',
+                'https://api.my-ip.io/ip.json',
+                'https://ipapi.co/json/'
+            ];
+
+            let ip = null;
+            for (let api of ipAPIs) {
+                try {
+                    const res = await fetch(api, { timeout: 5000 });
+                    if (!res.ok) continue;
+                    const data = await res.json();
+                    ip = data.ip || data.ip_address;
+                    if (ip) break;
+                } catch (e) {
+                    console.warn('IP API 失败:', api, e);
+                }
+            }
+
+            if (!ip) {
+                document.getElementById('ipDisplay').innerHTML = '<div class="ip-address">获取失败</div><div class="detail">无法获取IP地址，请检查网络</div>';
+                showError('所有IP API均失败');
+                return;
+            }
+
+            // 查询该IP的归属地
+            await queryIP(ip);
+        }
+
+        // 处理手动查询
+        async function handleManualQuery() {
+            const input = document.getElementById('ipInput').value.trim();
+            if (!input) {
+                showError('请输入IP地址');
+                return;
+            }
+            // 简单验证IP格式（可选）
+            const ipPattern = /^(\d{1,3}\.){3}\d{1,3}$/;
+            if (!ipPattern.test(input)) {
+                showError('IP地址格式不正确');
+                return;
+            }
+            await queryIP(input);
+        }
+
+        // 页面加载时自动获取当前IP
+        getCurrentIP().catch(e => {
             document.getElementById('ipDisplay').innerHTML = '<div class="ip-address">获取失败</div><div class="detail">请检查网络后重试</div>';
             showError(e.message);
         });
