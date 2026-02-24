@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>IP归属地查询</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        .container {
+            max-width: 500px;
+            width: 100%;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 30px 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            text-align: center;
+            color: #333;
+        }
+        .title {
+            font-size: 24px;
+            font-weight: bold;
+            margin-bottom: 30px;
+            color: #4a4a4a;
+        }
+        .ip-address {
+            font-size: 32px;
+            font-weight: bold;
+            background: #f0f0f0;
+            padding: 20px;
+            border-radius: 12px;
+            margin: 20px 0;
+            letter-spacing: 1px;
+            word-break: break-all;
+        }
+        .location {
+            font-size: 28px;
+            font-weight: bold;
+            margin: 20px 0;
+            padding: 15px;
+            border-radius: 12px;
+        }
+        .nj {
+            background: #4CAF50;
+            color: white;
+        }
+        .not-nj {
+            background: #f44336;
+            color: white;
+        }
+        .detail {
+            font-size: 18px;
+            color: #666;
+            margin-top: 20px;
+        }
+        .loading {
+            font-size: 18px;
+            color: #999;
+        }
+        .footer {
+            margin-top: 30px;
+            font-size: 14px;
+            color: rgba(255,255,255,0.8);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="title">📍 IP归属地查询</div>
+        <div id="ipDisplay" class="loading">正在获取IP信息...</div>
+    </div>
+    <div class="footer">扫码即查 · 实时更新</div>
+
+    <script>
+        async function getIPInfo() {
+            try {
+                // 1. 获取访问者的公网IP
+                const ipResponse = await fetch('https://api.ipify.org?format=json');
+                const ipData = await ipResponse.json();
+                const ip = ipData.ip;
+
+                // 2. 通过IP获取地理位置（使用 ip.sb 的免费API）
+                const geoResponse = await fetch(`https://ip.sb/geoip/${ip}`);
+                const geoData = await geoResponse.json();
+
+                // 3. 提取地理位置信息
+                const city = geoData.city || '未知';
+                const region = geoData.region || '';
+                const country = geoData.country || '未知';
+                const location = `${region} ${city}`.trim() || country;
+
+                // 4. 判断是否在南京
+                const isNanjing = location.includes('南京');
+
+                // 5. 更新页面显示
+                document.getElementById('ipDisplay').innerHTML = `
+                    <div class="ip-address">${ip}</div>
+                    <div class="location ${isNanjing ? 'nj' : 'not-nj'}">
+                        ${location}
+                    </div>
+                    <div class="detail">
+                        ${isNanjing ? '✅ 南京IP' : '❌ 非江苏南京IP'}
+                    </div>
+                `;
+            } catch (error) {
+                document.getElementById('ipDisplay').innerHTML = `
+                    <div class="ip-address">获取失败</div>
+                    <div class="detail">请检查网络后重试</div>
+                `;
+                console.error('Error:', error);
+            }
+        }
+
+        // 页面加载时执行
+        getIPInfo();
+    </script>
+</body>
+</html>
