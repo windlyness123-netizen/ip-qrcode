@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>IP归属地判断 (江苏南京/非江苏南京)</title>
+    <title>IP归属地查询（简版）</title>
     <style>
         * {
             box-sizing: border-box;
@@ -29,34 +29,20 @@
             padding: 32px 28px;
             border: 1px solid rgba(255, 255, 255, 0.6);
         }
-        h1 {
-            font-size: 2rem;
-            font-weight: 600;
-            margin-top: 0;
-            margin-bottom: 8px;
-            color: #0b2b42;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            flex-wrap: wrap;
-        }
-        h1 span {
-            background: #1e6f9f;
-            color: white;
-            font-size: 0.8rem;
-            padding: 4px 12px;
-            border-radius: 40px;
-            font-weight: 500;
-        }
-        .sub {
-            color: #2c4b66;
+        .contact-line {
+            text-align: center;
             margin-bottom: 28px;
             font-size: 1rem;
-            border-left: 4px solid #3b8fc2;
-            padding-left: 16px;
-            background: rgba(59, 143, 194, 0.08);
-            border-radius: 0 12px 12px 0;
-            line-height: 1.5;
+            background: #deeaf6;
+            padding: 16px 20px;
+            border-radius: 60px;
+            border: 1px solid rgba(255,255,255,0.9);
+            color: #0f4c75;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.05);
+        }
+        .contact-line strong {
+            font-size: 1.3rem;
+            color: #b13e3e;
         }
         .info-panel {
             background: #ffffffd9;
@@ -89,213 +75,149 @@
             border: 1px solid #b9d0e6;
             word-break: break-word;
         }
-        /* 特殊强调 */
-        #locationJudge {
-            font-weight: 700;
-            background: #faeec2;
-            color: #a5550e;
-            border-color: #e5b55c;
-        }
-        .info-value#locationDisplay {
-            font-size: 1.2rem;
+        #locationDisplay {
             font-weight: 600;
             background: #d2e6ff;
             color: #004070;
         }
-        button {
-            background: #0f4c75;
-            border: none;
-            color: white;
-            font-size: 1.2rem;
-            font-weight: 600;
-            padding: 16px 28px;
-            border-radius: 60px;
-            width: 100%;
-            cursor: pointer;
-            transition: all 0.2s;
-            box-shadow: 0 10px 20px -6px #0f4c75b3;
-            border: 1px solid rgba(255,255,255,0.3);
-            letter-spacing: 0.8px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 12px;
-        }
-        button:hover {
-            background: #0a3a5a;
-            transform: scale(1.01);
-            box-shadow: 0 16px 28px -6px #0a2e48;
-        }
-        button:active {
-            transform: scale(0.98);
-        }
-        .footnote {
-            font-size: 0.85rem;
-            color: #3d637f;
-            margin-top: 24px;
+        .update-time {
             text-align: center;
-            background: #deeaf6cc;
-            padding: 12px 20px;
-            border-radius: 50px;
-            border: 1px solid #ffffff;
-        }
-        .footnote code {
-            background: #1d3d5c;
-            color: #eaf2fd;
-            padding: 2px 10px;
-            border-radius: 24px;
-            font-size: 0.8rem;
-        }
-        .loader {
-            display: inline-block;
-            width: 18px;
-            height: 18px;
-            border: 3px solid rgba(255,255,255,0.5);
-            border-radius: 50%;
-            border-top-color: white;
-            animation: spin 0.8s linear infinite;
-        }
-        @keyframes spin { to { transform: rotate(360deg); } }
-        .status {
-            min-height: 32px;
             font-size: 0.95rem;
-            margin-top: 16px;
-            text-align: center;
+            color: #2c4b66;
+            background: #e5eff9;
+            padding: 10px 18px;
+            border-radius: 40px;
+            border: 1px solid #b9d0e6;
+            margin-top: 8px;
         }
-        .judge-highlight {
-            font-weight: 700;
+        @media (max-width: 480px) {
+            .card { padding: 24px 18px; }
+            .info-label { width: 85px; font-size: 0.9rem; }
         }
     </style>
 </head>
 <body>
     <div class="card">
-        <h1>
-            🌍 IP归属地查询 (南京判断)
-            <span>API v2</span>
-        </h1>
+        <!-- 顶部联系信息 -->
+        <div class="contact-line">
+            📸 截图本页面联系在线客服 &nbsp;&nbsp; 没回复请致电 <strong>18761662888</strong>
+        </div>
 
-        <!-- 显示结果的区域 -->
+        <!-- 信息面板：归属地、IP地址（组织已删除） -->
         <div class="info-panel" id="resultPanel">
             <div class="info-row">
-                <div class="info-label">📍 组合位置</div>
+                <div class="info-label">📍 归属地</div>
                 <div class="info-value" id="locationDisplay">—</div>
-            </div>
-            <div class="info-row">
-                <div class="info-label">🏷️ 归属地判断</div>
-                <div class="info-value" id="locationJudge">—</div>
             </div>
             <div class="info-row">
                 <div class="info-label">🖥️ IP 地址</div>
                 <div class="info-value" id="ipDisplay">—</div>
             </div>
-            <div class="info-row">
-                <div class="info-label">🏢 组织</div>
-                <div class="info-value" id="orgDisplay">—</div>
-            </div>
-            <div class="info-row">
-                <div class="info-label">🌎 国家/地区</div>
-                <div class="info-value" id="countryDisplay">—</div>
-            </div>
+            <!-- 组织行已移除 -->
         </div>
 
-        <!-- 按钮和状态 -->
-        <button id="queryBtn">
-            <span>🔍</span> 查询我的信息 <span id="btnLoader" style="display: none;"><span class="loader"></span></span>
-        </button>
-
-        <div class="status" id="statusMessage">
-            ⚡ 点击按钮开始检测 (判断依据: 城市名是否为 Nanjing)
-        </div>
-
-        <!-- 联系信息 (保持不变) -->
-        <div style="text-align: center; margin-top: 24px; font-size: 1rem; background: #deeaf6; padding: 14px 20px; border-radius: 60px; border: 1px solid rgba(255,255,255,0.9); color: #0f4c75; box-shadow: 0 4px 8px rgba(0,0,0,0.05);">
-            📸 截图本页面联系在线客服 &nbsp;&nbsp; 没回复请致电 <strong style="font-size: 1.3rem; color: #b13e3e;">18761662888</strong>
-        </div>
-
+        <!-- 更新时间 -->
+        <div class="update-time" id="updateTime">⏳ 数据更新中…</div>
     </div>
 
     <script>
         (function() {
-            const btn = document.getElementById('queryBtn');
-            const btnLoader = document.getElementById('btnLoader');
+            // 获取元素（只需两个显示字段）
             const locationDisplay = document.getElementById('locationDisplay');
-            const locationJudge = document.getElementById('locationJudge');
             const ipDisplay = document.getElementById('ipDisplay');
-            const orgDisplay = document.getElementById('orgDisplay');
-            const countryDisplay = document.getElementById('countryDisplay');
-            const statusMsg = document.getElementById('statusMessage');
+            const updateTimeEl = document.getElementById('updateTime');
 
-            function setLoading(isLoading) {
-                if (isLoading) {
-                    btnLoader.style.display = 'inline-block';
-                    btn.disabled = true;
-                    statusMsg.innerHTML = '⏳ 请求中，请稍候...';
-                } else {
-                    btnLoader.style.display = 'none';
-                    btn.disabled = false;
+            // 省份英文 => 中文映射
+            const provinceMap = {
+                'Anhui': '安徽', 'Beijing': '北京', 'Chongqing': '重庆', 'Fujian': '福建',
+                'Gansu': '甘肃', 'Guangdong': '广东', 'Guangxi': '广西', 'Guizhou': '贵州',
+                'Hainan': '海南', 'Hebei': '河北', 'Heilongjiang': '黑龙江', 'Henan': '河南',
+                'Hong Kong': '香港', 'Hubei': '湖北', 'Hunan': '湖南', 'Inner Mongolia': '内蒙古',
+                'Jiangsu': '江苏', 'Jiangxi': '江西', 'Jilin': '吉林', 'Liaoning': '辽宁',
+                'Macau': '澳门', 'Ningxia': '宁夏', 'Qinghai': '青海', 'Shaanxi': '陕西',
+                'Shandong': '山东', 'Shanghai': '上海', 'Shanxi': '山西', 'Sichuan': '四川',
+                'Taiwan': '台湾', 'Tianjin': '天津', 'Tibet': '西藏', 'Xinjiang': '新疆',
+                'Yunnan': '云南', 'Zhejiang': '浙江'
+            };
+
+            // 部分城市英文 => 中文映射
+            const cityMap = {
+                'Nanjing': '南京',
+                'Beijing': '北京',
+                'Shanghai': '上海',
+                'Guangzhou': '广州',
+                'Shenzhen': '深圳',
+                'Chengdu': '成都',
+                'Wuhan': '武汉',
+                'Hangzhou': '杭州',
+                'Xi\'an': '西安',
+                'Chongqing': '重庆'
+            };
+
+            function getCountryChinese(countryCode, countryNameEn) {
+                if (countryCode === 'CN') return '中国';
+                return countryNameEn;
+            }
+
+            function formatLocationChinese(data) {
+                const countryCode = data.country_code || '';
+                const countryEn = data.country || '';
+                const regionEn = data.region || '';
+                const cityEn = data.city || '';
+
+                const country = getCountryChinese(countryCode, countryEn);
+                
+                let region = regionEn;
+                if (regionEn && provinceMap[regionEn]) {
+                    region = provinceMap[regionEn];
                 }
+                
+                let city = cityEn;
+                if (cityEn && cityMap[cityEn]) {
+                    city = cityMap[cityEn];
+                }
+
+                let parts = [country];
+                if (region) parts.push(region);
+                if (city && city !== region) parts.push(city);
+                return parts.join(' ');
             }
 
             async function fetchGeoInfo() {
-                setLoading(true);
                 try {
-                    // 调用 ip.sb API 获取当前访问者的 IP 信息
                     const response = await fetch('https://api.ip.sb/geoip', {
                         headers: { 'Accept': 'application/json' }
                     });
 
                     if (!response.ok) {
-                        throw new Error(`HTTP ${response.status} — ${response.statusText}`);
+                        throw new Error(`HTTP ${response.status}`);
                     }
 
                     const data = await response.json();
                     console.log('API响应:', data);
 
-                    // 提取字段
-                    const city = data.city || '未知城市';
-                    const country = data.country || '未知国家';
                     const ip = data.ip || '—';
-                    const organization = data.organization || data.isp || '未提供';
-                    const countryCode = data.country_code || '';
+                    const locationChinese = formatLocationChinese(data);
 
-                    // 组合位置 (城市 + 国家)
-                    const locationStr = `${city} ${country}`.trim();
-
-                    // ----- 归属地判断逻辑 (根据南京) -----
-                    // 如果城市 (忽略大小写) 是 'nanjing' 则显示 '江苏南京'，否则显示 '非江苏南京归属地'
-                    let judgeText = '非江苏南京归属地';  // 默认
-                    if (city && city.toLowerCase() === 'nanjing') {
-                        judgeText = '江苏南京';
-                    }
-                    // -------------------------
-
-                    // 更新UI
-                    locationDisplay.textContent = locationStr;
-                    locationJudge.textContent = judgeText;
+                    // 更新信息（不再更新组织）
+                    locationDisplay.textContent = locationChinese;
                     ipDisplay.textContent = ip;
-                    orgDisplay.textContent = organization;
-                    countryDisplay.textContent = `${country} (${countryCode})`;
 
-                    statusMsg.innerHTML = '✅ 数据更新于 ' + new Date().toLocaleTimeString('zh-CN');
+                    // 更新时间
+                    const now = new Date();
+                    const timeStr = now.toLocaleTimeString('zh-CN', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' });
+                    updateTimeEl.textContent = `✅ 数据更新于 ${timeStr}`;
+
                 } catch (error) {
                     console.error('API请求失败:', error);
-                    statusMsg.innerHTML = `❌ 请求失败: ${error.message}。可能网络问题或API限制。`;
-
-                    // 清空显示
                     locationDisplay.textContent = '—';
-                    locationJudge.textContent = '—';
                     ipDisplay.textContent = '—';
-                    orgDisplay.textContent = '—';
-                    countryDisplay.textContent = '—';
-                } finally {
-                    setLoading(false);
+                    updateTimeEl.textContent = '❌ 数据更新失败';
                 }
             }
 
-            btn.addEventListener('click', fetchGeoInfo);
-
-            // (可选) 页面加载后自动查询
-            // fetchGeoInfo();
+            // 页面加载自动获取
+            fetchGeoInfo();
         })();
     </script>
 </body>
