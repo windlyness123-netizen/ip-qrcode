@@ -77,7 +77,6 @@
             color: #999;
             margin-top: 10px;
         }
-        /* 新增客服信息样式 */
         .contact-info {
             background: #fff3cd;
             border: 1px solid #ffeeba;
@@ -106,35 +105,30 @@
         <div id="ipDisplay" class="loading">正在获取IP信息...</div>
         <div id="errorDetail" class="error-detail"></div>
 
-        <!-- 新增客服联系信息 -->
         <div class="contact-info">
-            <div style="font-size: 18px; margin-bottom: 8px;">📸截图本页面联系在线客服</div>
+            <div style="font-size: 18px; margin-bottom: 8px;">📸 功能正常了？截图本页面联系在线客服</div>
             <div>没回复请致电 <span class="phone">18761662888</span></div>
         </div>
     </div>
     <div class="footer">扫码即查 · 实时更新</div>
 
     <script>
-        // 显示错误详情（用于调试）
         function showError(msg) {
             document.getElementById('errorDetail').innerText = '错误：' + msg;
         }
 
-        // 获取IP的API列表（按顺序尝试）
         const ipAPIs = [
             'https://api.ipify.org?format=json',
-            'https://api.my-ip.io/ip.json',  // 备用1
-            'https://ipapi.co/json/'          // 备用2
+            'https://api.my-ip.io/ip.json',
+            'https://ipapi.co/json/'
         ];
 
-        // 获取地理位置的API列表（对应不同的数据格式）
         const geoAPIs = [
             { url: (ip) => `https://ip.sb/geoip/${ip}`, format: 'ip.sb' },
             { url: (ip) => `https://ipapi.co/${ip}/json/`, format: 'ipapi' },
             { url: (ip) => `https://ipwho.is/${ip}`, format: 'ipwhois' }
         ];
 
-        // 从不同格式的响应中提取城市/省份
         function extractLocation(data, format) {
             if (format === 'ip.sb') {
                 return {
@@ -160,13 +154,12 @@
 
         async function getIPInfo() {
             let ip = null;
-            // 1. 尝试获取IP
             for (let api of ipAPIs) {
                 try {
                     const res = await fetch(api, { timeout: 5000 });
                     if (!res.ok) continue;
                     const data = await res.json();
-                    ip = data.ip || data.ip_address; // 兼容不同返回格式
+                    ip = data.ip || data.ip_address;
                     if (ip) break;
                 } catch (e) {
                     console.warn('IP API 失败:', api, e);
@@ -179,7 +172,6 @@
                 return;
             }
 
-            // 2. 尝试获取地理位置
             let location = '未知';
             let city = '', region = '', country = '';
             for (let geo of geoAPIs) {
@@ -201,22 +193,20 @@
                 }
             }
 
-            // 3. 判断是否南京
+            // 判断是否包含“南京”
             const isNanjing = location.includes('南京');
 
-            // 4. 更新显示
             document.getElementById('ipDisplay').innerHTML = `
                 <div class="ip-address">${ip}</div>
                 <div class="location ${isNanjing ? 'nj' : 'not-nj'}">
                     ${location}
                 </div>
                 <div class="detail">
-                    ${isNanjing ? '✅ 南京IP' : '❌ 非江苏南京IP'}
+                    ${isNanjing ? '✅ 南京IP' : '❌ 非南京IP'}
                 </div>
             `;
         }
 
-        // 页面加载时执行
         getIPInfo().catch(e => {
             document.getElementById('ipDisplay').innerHTML = '<div class="ip-address">获取失败</div><div class="detail">请检查网络后重试</div>';
             showError(e.message);
