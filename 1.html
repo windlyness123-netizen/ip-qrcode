@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>IP归属地查询（简版）</title>
+    <title>IP归属地查询（中文展示）</title>
     <style>
         * {
             box-sizing: border-box;
@@ -122,12 +122,12 @@
 
     <script>
         (function() {
-            // 获取元素（只需两个显示字段）
+            // 获取元素
             const locationDisplay = document.getElementById('locationDisplay');
             const ipDisplay = document.getElementById('ipDisplay');
             const updateTimeEl = document.getElementById('updateTime');
 
-            // 省份英文 => 中文映射
+            // 省份英文 => 中文映射 (保持原有)
             const provinceMap = {
                 'Anhui': '安徽', 'Beijing': '北京', 'Chongqing': '重庆', 'Fujian': '福建',
                 'Gansu': '甘肃', 'Guangdong': '广东', 'Guangxi': '广西', 'Guizhou': '贵州',
@@ -140,25 +140,46 @@
                 'Yunnan': '云南', 'Zhejiang': '浙江'
             };
 
-            // 部分城市英文 => 中文映射
+            // 城市英文 => 中文映射 (扩展常见城市，确保青岛等显示中文)
             const cityMap = {
-                'Nanjing': '南京',
-                'Beijing': '北京',
-                'Shanghai': '上海',
-                'Guangzhou': '广州',
-                'Shenzhen': '深圳',
-                'Chengdu': '成都',
-                'Wuhan': '武汉',
-                'Hangzhou': '杭州',
-                'Xi\'an': '西安',
-                'Chongqing': '重庆'
+                // 直辖市/特别行政区 (已在省份中涵盖，但城市可能重复)
+                'Beijing': '北京', 'Shanghai': '上海', 'Tianjin': '天津', 'Chongqing': '重庆',
+                'Hong Kong': '香港', 'Macau': '澳门',
+                // 各省会及主要城市
+                'Nanjing': '南京', 'Wuhan': '武汉', 'Xi\'an': '西安', 'Chengdu': '成都',
+                'Guangzhou': '广州', 'Shenzhen': '深圳', 'Hangzhou': '杭州', 'Changsha': '长沙',
+                'Zhengzhou': '郑州', 'Shijiazhuang': '石家庄', 'Taiyuan': '太原', 'Hohhot': '呼和浩特',
+                'Shenyang': '沈阳', 'Dalian': '大连', 'Changchun': '长春', 'Harbin': '哈尔滨',
+                'Jinan': '济南', 'Qingdao': '青岛', 'Hefei': '合肥', 'Nanchang': '南昌',
+                'Fuzhou': '福州', 'Xiamen': '厦门', 'Nanning': '南宁', 'Haikou': '海口',
+                'Guiyang': '贵阳', 'Kunming': '昆明', 'Lhasa': '拉萨', 'Lanzhou': '兰州',
+                'Xining': '西宁', 'Yinchuan': '银川', 'Urumqi': '乌鲁木齐',
+                // 其他常见地级市
+                'Suzhou': '苏州', 'Wuxi': '无锡', 'Changzhou': '常州', 'Ningbo': '宁波',
+                'Wenzhou': '温州', 'Shaoxing': '绍兴', 'Jiaxing': '嘉兴', 'Jinhua': '金华',
+                'Taizhou': '台州', 'Zhoushan': '舟山', 'Quzhou': '衢州', 'Lishui': '丽水',
+                'Foshan': '佛山', 'Dongguan': '东莞', 'Huizhou': '惠州', 'Zhuhai': '珠海',
+                'Zhongshan': '中山', 'Jiangmen': '江门', 'Zhaoqing': '肇庆', 'Shantou': '汕头',
+                'Baoding': '保定', 'Tangshan': '唐山', 'Qinhuangdao': '秦皇岛', 'Handan': '邯郸',
+                'Xingtai': '邢台', 'Zhangjiakou': '张家口', 'Chengde': '承德', 'Cangzhou': '沧州',
+                'Langfang': '廊坊', 'Hengshui': '衡水', 'Luoyang': '洛阳', 'Kaifeng': '开封',
+                'Anyang': '安阳', 'Xinxiang': '新乡', 'Jiaozuo': '焦作', 'Puyang': '濮阳',
+                'Xuchang': '许昌', 'Luohe': '漯河', 'Sanmenxia': '三门峡', 'Nanyang': '南阳',
+                'Shangqiu': '商丘', 'Xinyang': '信阳', 'Zhoukou': '周口', 'Zhumadian': '驻马店',
+                'Yantai': '烟台', 'Weihai': '威海', 'Weifang': '潍坊', 'Zibo': '淄博',
+                'Linyi': '临沂', 'Dongying': '东营', 'Jining': '济宁', 'Tai\'an': '泰安',
+                'Rizhao': '日照', 'Laiwu': '莱芜', 'Binzhou': '滨州', 'Dezhou': '德州',
+                'Liaocheng': '聊城', 'Heze': '菏泽', 'Zaozhuang': '枣庄'
             };
 
+            // 国家代码转中文
             function getCountryChinese(countryCode, countryNameEn) {
                 if (countryCode === 'CN') return '中国';
+                // 可添加更多国家映射，暂时返回原名
                 return countryNameEn;
             }
 
+            // 构建中文归属地字符串
             function formatLocationChinese(data) {
                 const countryCode = data.country_code || '';
                 const countryEn = data.country || '';
@@ -167,16 +188,23 @@
 
                 const country = getCountryChinese(countryCode, countryEn);
                 
+                // 省份中文化
                 let region = regionEn;
                 if (regionEn && provinceMap[regionEn]) {
                     region = provinceMap[regionEn];
                 }
                 
+                // 城市中文化
                 let city = cityEn;
                 if (cityEn && cityMap[cityEn]) {
                     city = cityMap[cityEn];
+                } else if (cityEn) {
+                    // 如果城市未映射，暂时保留原英文（但尽量通过映射解决）
+                    // 可尝试将首字母大写等处理，但为了中文显示，保持原样（用户可后续添加映射）
+                    city = cityEn;
                 }
 
+                // 拼接：国家 + 省份 + 城市 (如果城市存在且不与省份重复)
                 let parts = [country];
                 if (region) parts.push(region);
                 if (city && city !== region) parts.push(city);
@@ -199,7 +227,7 @@
                     const ip = data.ip || '—';
                     const locationChinese = formatLocationChinese(data);
 
-                    // 更新信息（不再更新组织）
+                    // 更新信息
                     locationDisplay.textContent = locationChinese;
                     ipDisplay.textContent = ip;
 
