@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>💖 超甜表白 💖</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: "微软雅黑", sans-serif;
+        }
+
+        body {
+            background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 50%, #fecfef 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            overflow: hidden;
+        }
+
+        .love-box {
+            background: white;
+            padding: 60px 40px;
+            border-radius: 25px;
+            box-shadow: 0 15px 40px rgba(0,0,0,0.15);
+            text-align: center;
+            max-width: 520px;
+            width: 100%;
+            position: relative;
+            z-index: 10;
+        }
+
+        h1 {
+            color: #ff4d6d;
+            font-size: 32px;
+            margin-bottom: 20px;
+        }
+
+        .content {
+            font-size: 19px;
+            color: #333;
+            line-height: 1.9;
+            margin-bottom: 35px;
+        }
+
+        .emoji {
+            font-size: 60px;
+            margin: 20px 0;
+        }
+
+        .btn-group {
+            display: flex;
+            justify-content: center;
+            gap: 25px;
+            margin-top: 30px;
+            position: relative;
+        }
+
+        button {
+            padding: 14px 35px;
+            border: none;
+            border-radius: 50px;
+            font-size: 17px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            user-select: none;
+        }
+
+        .btn-yes {
+            background: #ff4d6d;
+            color: white;
+            font-weight: bold;
+        }
+        .btn-yes:hover {
+            transform: scale(1.08);
+        }
+
+        .btn-no {
+            background: #ccc;
+            color: #666;
+            position: relative;
+        }
+
+        /* 烟花画布全屏 */
+        #fireworks {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+            pointer-events: none;
+            display: none;
+        }
+    </style>
+</head>
+
+<body>
+    <canvas id="fireworks"></canvas>
+
+    <div class="love-box" id="box">
+        <div class="emoji">😘🤪💘</div>
+        <h1>这位小可爱看这里！</h1>
+        <div class="content" id="text">
+            我有个超严肃的事情宣布👇<br>
+            我喜欢你！不是一时兴起<br>
+            是蓄谋已久+无法自拔+非你不可<br>
+            你不答应我，我就原地撒娇打滚耍赖皮<br>
+            反正这辈子就赖上你啦！<br>
+            现在给你两个选择：
+        </div>
+
+        <div class="btn-group">
+            <button class="btn-yes" onclick="clickYes()">我愿意！</button>
+            <button class="btn-no" onmouseover="runAway()">我拒绝</button>
+        </div>
+    </div>
+
+    <script>
+        // 同意次数计数器（需要点3次）
+        let yesCount = 0;
+
+        // 拒绝按钮乱跑
+        function runAway() {
+            let btn = document.querySelector('.btn-no');
+            let x = Math.random() * 400 - 200;
+            let y = Math.random() * 400 - 200;
+            btn.style.transform = `translate(${x}px, ${y}px)`;
+        }
+
+        // 点击同意（多点几次）
+        function clickYes() {
+            yesCount++;
+            let text = document.getElementById('text');
+
+            if (yesCount === 1) {
+                text.innerHTML = "真的吗？再确认一次！💖";
+            } 
+            else if (yesCount === 2) {
+                text.innerHTML = "哇！你确定不后悔？🥺";
+            } 
+            else if (yesCount === 3) {
+                // 第三次 → 成功 + 烟花
+                showSuccess();
+                startFireworks();
+            }
+        }
+
+        // 成功页面
+        function showSuccess() {
+            document.getElementById('box').innerHTML = `
+                <div class="emoji">🥳🎉💖💍</div>
+                <h1>你是我的人啦！</h1>
+                <div class="content">
+                    爱你爱你爱你！<br>
+                    管吃管喝管开心，永远宠你一辈子～<br>
+                    么么哒😘
+                </div>
+            `;
+        }
+
+        // ---------------------- 烟花效果 ----------------------
+        const canvas = document.getElementById('fireworks');
+        const ctx = canvas.getContext('2d');
+        let particles = [];
+
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+        resizeCanvas();
+        window.addEventListener('resize', resizeCanvas);
+
+        function startFireworks() {
+            canvas.style.display = 'block';
+            setInterval(createFirework, 300);
+            requestAnimationFrame(render);
+        }
+
+        function createFirework() {
+            let x = Math.random() * canvas.width;
+            let y = Math.random() * canvas.height / 2;
+            for (let i = 0; i < 100; i++) {
+                particles.push({
+                    x: x,
+                    y: y,
+                    vx: (Math.random() - 0.5) * 6,
+                    vy: (Math.random() - 0.5) * 6,
+                    life: 100,
+                    color: `hsl(${Math.random() * 360},100%,50%)`
+                });
+            }
+        }
+
+        function render() {
+            ctx.fillStyle = 'rgba(0,0,0,0.1)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            for (let i = particles.length - 1; i >= 0; i--) {
+                let p = particles[i];
+                ctx.fillStyle = p.color;
+                ctx.fillRect(p.x, p.y, 3, 3);
+                p.x += p.vx;
+                p.y += p.vy;
+                p.life--;
+                if (p.life <= 0) particles.splice(i, 1);
+            }
+            requestAnimationFrame(render);
+        }
+    </script>
+</body>
+</html>
